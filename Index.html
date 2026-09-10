@@ -1,0 +1,1607 @@
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
+
+    <title>Navegador Mapbox</title>
+
+    <!-- MAPBOX GL JS -->
+    <link
+        href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css"
+        rel="stylesheet"
+    >
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.js"></script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        #map {
+            position: absolute;
+            inset: 0;
+        }
+
+        /* ============================
+           TOPO
+        ============================ */
+
+        .top-panel {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            z-index: 10;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+
+            width: 100%;
+
+            background: white;
+
+            border-radius: 16px;
+
+            padding: 5px;
+
+            box-shadow:
+                0 4px 20px rgba(0,0,0,.20);
+        }
+
+        .search-box input {
+            flex: 1;
+
+            border: 0;
+            outline: none;
+
+            font-size: 16px;
+
+            padding: 14px;
+        }
+
+        .search-box button {
+            width: 48px;
+            height: 48px;
+
+            border: 0;
+            border-radius: 13px;
+
+            background: #111;
+            color: white;
+
+            font-size: 20px;
+
+            cursor: pointer;
+        }
+
+        /* ============================
+           RESULTADOS
+        ============================ */
+
+        #results {
+            margin-top: 8px;
+
+            background: white;
+
+            border-radius: 15px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 4px 20px rgba(0,0,0,.18);
+
+            display: none;
+        }
+
+        .result {
+            padding: 14px;
+
+            border-bottom: 1px solid #eee;
+
+            cursor: pointer;
+        }
+
+        .result:last-child {
+            border-bottom: 0;
+        }
+
+        .result:hover {
+            background: #f5f5f5;
+        }
+
+        .result-title {
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .result-address {
+            color: #666;
+            font-size: 13px;
+
+            margin-top: 4px;
+        }
+
+        /* ============================
+           BOTÃO GPS
+        ============================ */
+
+        .gps-button {
+            position: absolute;
+
+            right: 15px;
+            bottom: 275px;
+
+            z-index: 10;
+
+            width: 52px;
+            height: 52px;
+
+            border-radius: 50%;
+
+            border: none;
+
+            background: white;
+
+            box-shadow:
+                0 4px 15px rgba(0,0,0,.25);
+
+            font-size: 22px;
+
+            cursor: pointer;
+        }
+
+        /* ============================
+           PAINEL INFERIOR
+        ============================ */
+
+        .bottom-panel {
+            position: absolute;
+
+            left: 0;
+            right: 0;
+            bottom: 0;
+
+            z-index: 10;
+
+            background: white;
+
+            border-radius:
+                24px 24px 0 0;
+
+            padding: 16px;
+
+            box-shadow:
+                0 -5px 25px rgba(0,0,0,.15);
+        }
+
+        .handle {
+            width: 45px;
+            height: 5px;
+
+            border-radius: 10px;
+
+            background: #ddd;
+
+            margin:
+                0 auto 15px;
+        }
+
+        /* ============================
+           VEÍCULOS
+        ============================ */
+
+        .vehicles {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 8px;
+
+            margin-bottom: 15px;
+        }
+
+        .vehicle {
+            border: 0;
+
+            background: #f2f2f2;
+
+            border-radius: 14px;
+
+            padding: 12px 5px;
+
+            cursor: pointer;
+
+            font-size: 14px;
+
+            transition: .2s;
+        }
+
+        .vehicle .icon {
+            display: block;
+
+            font-size: 27px;
+
+            margin-bottom: 5px;
+        }
+
+        .vehicle.active {
+            background: #111;
+
+            color: white;
+        }
+
+        /* ============================
+           INFORMAÇÕES
+        ============================ */
+
+        .route-info {
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 10px;
+
+            margin-bottom: 15px;
+        }
+
+        .info {
+            background: #f6f6f6;
+
+            border-radius: 14px;
+
+            padding: 13px;
+
+            text-align: center;
+        }
+
+        .info-label {
+            color: #777;
+
+            font-size: 12px;
+
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 19px;
+
+            font-weight: bold;
+        }
+
+        /* ============================
+           STATUS
+        ============================ */
+
+        #status {
+            text-align: center;
+
+            color: #666;
+
+            font-size: 13px;
+
+            margin-bottom: 10px;
+        }
+
+        /* ============================
+           BOTÃO NAVEGAR
+        ============================ */
+
+        #navigate {
+            width: 100%;
+
+            border: 0;
+
+            border-radius: 14px;
+
+            padding: 16px;
+
+            background: #111;
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        #navigate:disabled {
+            background: #ccc;
+
+            cursor: not-allowed;
+        }
+
+        /* ============================
+           MOBILE
+        ============================ */
+
+        @media (max-width: 600px) {
+
+            .top-panel {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+            }
+
+            .bottom-panel {
+                padding: 14px;
+            }
+
+            .gps-button {
+                bottom: 290px;
+            }
+
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- ============================
+         MAPA
+    ============================ -->
+
+    <div id="map"></div>
+
+
+    <!-- ============================
+         PESQUISA
+    ============================ -->
+
+    <div class="top-panel">
+
+        <div class="search-box">
+
+            <input
+                id="search"
+                type="text"
+                placeholder="Para onde você quer ir?"
+                autocomplete="off"
+            >
+
+            <button id="searchButton">
+                🔍
+            </button>
+
+        </div>
+
+        <div id="results"></div>
+
+    </div>
+
+
+    <!-- ============================
+         GPS
+    ============================ -->
+
+    <button
+        class="gps-button"
+        id="gpsButton"
+        title="Minha localização"
+    >
+        📍
+    </button>
+
+
+    <!-- ============================
+         PAINEL
+    ============================ -->
+
+    <div class="bottom-panel">
+
+        <div class="handle"></div>
+
+        <div id="status">
+            Obtendo sua localização...
+        </div>
+
+
+        <!-- VEÍCULOS -->
+
+        <div class="vehicles">
+
+            <button
+                class="vehicle active"
+                data-type="car"
+            >
+                <span class="icon">🚗</span>
+                Carro
+            </button>
+
+            <button
+                class="vehicle"
+                data-type="motorcycle"
+            >
+                <span class="icon">🏍️</span>
+                Moto
+            </button>
+
+            <button
+                class="vehicle"
+                data-type="bike"
+            >
+                <span class="icon">🚲</span>
+                Bike
+            </button>
+
+        </div>
+
+
+        <!-- INFORMAÇÕES -->
+
+        <div class="route-info">
+
+            <div class="info">
+
+                <div class="info-label">
+                    DISTÂNCIA
+                </div>
+
+                <div
+                    class="info-value"
+                    id="distance"
+                >
+                    --
+                </div>
+
+            </div>
+
+
+            <div class="info">
+
+                <div class="info-label">
+                    TEMPO ESTIMADO
+                </div>
+
+                <div
+                    class="info-value"
+                    id="duration"
+                >
+                    --
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- NAVEGAR -->
+
+        <button
+            id="navigate"
+            disabled
+        >
+            🧭 Iniciar navegação
+        </button>
+
+    </div>
+
+
+<script>
+
+/* ============================================================
+   CONFIGURAÇÃO MAPBOX
+============================================================ */
+
+mapboxgl.accessToken =
+    'pk.eyJ1IjoibGVvbmFyZG9zb3V6YXMiLCJhIjoiY21nODg0OG0wMDRuMDJycGw1N3ByeGNpbiJ9.yj4IXhTZD-oU1to8PzPsgA';
+
+
+/* ============================================================
+   VARIÁVEIS
+============================================================ */
+
+let map;
+
+let userLocation = null;
+
+let destination = null;
+
+let userMarker = null;
+
+let destinationMarker = null;
+
+let currentVehicle = 'car';
+
+let routeActive = false;
+
+let watchId = null;
+
+
+/* ============================================================
+   INICIAR MAPA
+============================================================ */
+
+map = new mapboxgl.Map({
+
+    container: 'map',
+
+    style: 'mapbox://styles/mapbox/streets-v12',
+
+    center: [-49.2539, -16.6869],
+
+    zoom: 13,
+
+    attributionControl: true
+
+});
+
+
+/* ============================================================
+   CONTROLES DO MAPA
+============================================================ */
+
+map.addControl(
+    new mapboxgl.NavigationControl(),
+    'bottom-right'
+);
+
+
+/* ============================================================
+   LOCALIZAÇÃO
+============================================================ */
+
+function getLocation() {
+
+    if (!navigator.geolocation) {
+
+        setStatus(
+            'Seu navegador não suporta GPS.'
+        );
+
+        return;
+    }
+
+
+    setStatus(
+        'Obtendo sua localização...'
+    );
+
+
+    navigator.geolocation.getCurrentPosition(
+
+        position => {
+
+            userLocation = [
+
+                position.coords.longitude,
+
+                position.coords.latitude
+
+            ];
+
+
+            updateUserMarker();
+
+
+            map.flyTo({
+
+                center: userLocation,
+
+                zoom: 15
+
+            });
+
+
+            setStatus(
+                'Localização encontrada.'
+            );
+
+        },
+
+        error => {
+
+            console.error(error);
+
+            setStatus(
+                'Não foi possível obter sua localização.'
+            );
+
+        },
+
+        {
+
+            enableHighAccuracy: true,
+
+            timeout: 15000,
+
+            maximumAge: 5000
+
+        }
+
+    );
+
+}
+
+
+/* ============================================================
+   ATUALIZAR MARCADOR DO USUÁRIO
+============================================================ */
+
+function updateUserMarker() {
+
+    if (!userLocation) {
+        return;
+    }
+
+
+    if (!userMarker) {
+
+        const element =
+            document.createElement('div');
+
+
+        element.style.width = '20px';
+
+        element.style.height = '20px';
+
+        element.style.background = '#1683ff';
+
+        element.style.border =
+            '4px solid white';
+
+        element.style.borderRadius =
+            '50%';
+
+        element.style.boxShadow =
+            '0 2px 8px rgba(0,0,0,.4)';
+
+
+        userMarker =
+            new mapboxgl.Marker({
+                element
+            })
+            .setLngLat(userLocation)
+            .addTo(map);
+
+    } else {
+
+        userMarker.setLngLat(
+            userLocation
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   PESQUISA
+============================================================ */
+
+const searchInput =
+    document.getElementById('search');
+
+const results =
+    document.getElementById('results');
+
+
+searchInput.addEventListener(
+    'input',
+    debounce(() => {
+
+        const query =
+            searchInput.value.trim();
+
+
+        if (query.length < 3) {
+
+            results.style.display =
+                'none';
+
+            return;
+
+        }
+
+
+        searchAddress(query);
+
+    }, 500)
+);
+
+
+/* ============================================================
+   DEBOUNCE
+============================================================ */
+
+function debounce(func, delay) {
+
+    let timeout;
+
+    return function () {
+
+        clearTimeout(timeout);
+
+        timeout =
+            setTimeout(
+                func,
+                delay
+            );
+
+    };
+
+}
+
+
+/* ============================================================
+   GEOCODING MAPBOX
+============================================================ */
+
+async function searchAddress(query) {
+
+    try {
+
+        const url =
+            `https://api.mapbox.com/search/geocode/v6/forward`
+            + `?q=${encodeURIComponent(query)}`
+            + `&access_token=${mapboxgl.accessToken}`
+            + `&language=pt-BR`
+            + `&country=BR`
+            + `&limit=6`
+            + `&autocomplete=true`;
+
+
+        const response =
+            await fetch(url);
+
+
+        const data =
+            await response.json();
+
+
+        results.innerHTML = '';
+
+
+        if (
+            !data.features ||
+            data.features.length === 0
+        ) {
+
+            results.style.display =
+                'none';
+
+            return;
+
+        }
+
+
+        data.features.forEach(
+            feature => {
+
+                const item =
+                    document.createElement('div');
+
+
+                item.className =
+                    'result';
+
+
+                const properties =
+                    feature.properties || {};
+
+
+                const name =
+                    properties.name ||
+                    'Local';
+
+
+                const address =
+                    properties.full_address ||
+                    feature.place_name ||
+                    name;
+
+
+                item.innerHTML = `
+
+                    <div class="result-title">
+                        ${escapeHtml(name)}
+                    </div>
+
+                    <div class="result-address">
+                        ${escapeHtml(address)}
+                    </div>
+
+                `;
+
+
+                item.addEventListener(
+                    'click',
+                    () => {
+
+                        const coordinates =
+                            feature.geometry.coordinates;
+
+
+                        selectDestination(
+                            coordinates,
+                            address
+                        );
+
+                    }
+                );
+
+
+                results.appendChild(item);
+
+            }
+        );
+
+
+        results.style.display =
+            'block';
+
+    }
+
+    catch (error) {
+
+        console.error(
+            'Erro na pesquisa:',
+            error
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   ESCAPAR HTML
+============================================================ */
+
+function escapeHtml(text) {
+
+    const div =
+        document.createElement('div');
+
+    div.textContent =
+        text;
+
+    return div.innerHTML;
+
+}
+
+
+/* ============================================================
+   SELECIONAR DESTINO
+============================================================ */
+
+function selectDestination(
+    coordinates,
+    address
+) {
+
+    destination =
+        coordinates;
+
+
+    searchInput.value =
+        address;
+
+
+    results.style.display =
+        'none';
+
+
+    /* Remove marcador anterior */
+
+    if (destinationMarker) {
+
+        destinationMarker.remove();
+
+    }
+
+
+    /* Novo marcador */
+
+    destinationMarker =
+        new mapboxgl.Marker({
+            color: '#e53935'
+        })
+        .setLngLat(destination)
+        .addTo(map);
+
+
+    map.flyTo({
+
+        center: destination,
+
+        zoom: 14
+
+    });
+
+
+    if (userLocation) {
+
+        calculateRoute();
+
+    } else {
+
+        setStatus(
+            'Aguardando localização GPS...'
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   PERFIL DE ROTA
+============================================================ */
+
+function getProfile() {
+
+    if (currentVehicle === 'bike') {
+
+        return 'cycling';
+
+    }
+
+
+    if (currentVehicle === 'motorcycle') {
+
+        /*
+         * Mapbox não possui perfil
+         * específico para motocicleta.
+         *
+         * Usamos driving.
+         */
+
+        return 'driving';
+
+    }
+
+
+    return 'driving-traffic';
+
+}
+
+
+/* ============================================================
+   CALCULAR ROTA
+============================================================ */
+
+async function calculateRoute() {
+
+    if (
+        !userLocation ||
+        !destination
+    ) {
+
+        return;
+
+    }
+
+
+    setStatus(
+        'Calculando rota...'
+    );
+
+
+    try {
+
+        const profile =
+            getProfile();
+
+
+        const coordinates =
+            `${userLocation[0]},${userLocation[1]};`
+            + `${destination[0]},${destination[1]}`;
+
+
+        const url =
+            `https://api.mapbox.com/directions/v5/mapbox/${profile}/${coordinates}`
+            + `?alternatives=false`
+            + `&geometries=geojson`
+            + `&overview=full`
+            + `&steps=true`
+            + `&language=pt-BR`
+            + `&access_token=${mapboxgl.accessToken}`;
+
+
+        const response =
+            await fetch(url);
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            !data.routes ||
+            data.routes.length === 0
+        ) {
+
+            setStatus(
+                'Não foi encontrada uma rota.'
+            );
+
+            return;
+
+        }
+
+
+        const route =
+            data.routes[0];
+
+
+        const distance =
+            route.distance;
+
+
+        const duration =
+            route.duration;
+
+
+        const geometry =
+            route.geometry;
+
+
+        drawRoute(
+            geometry
+        );
+
+
+        document.getElementById(
+            'distance'
+        ).textContent =
+            formatDistance(distance);
+
+
+        document.getElementById(
+            'duration'
+        ).textContent =
+            formatDuration(duration);
+
+
+        document.getElementById(
+            'navigate'
+        ).disabled =
+            false;
+
+
+        setStatus(
+            'Rota calculada.'
+        );
+
+
+        fitRoute();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            'Erro ao calcular rota:',
+            error
+        );
+
+
+        setStatus(
+            'Erro ao calcular rota.'
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   DESENHAR ROTA
+============================================================ */
+
+function drawRoute(geometry) {
+
+    const sourceId =
+        'route';
+
+
+    if (
+        map.getSource(sourceId)
+    ) {
+
+        map.getSource(sourceId)
+            .setData({
+
+                type: 'Feature',
+
+                properties: {},
+
+                geometry: geometry
+
+            });
+
+        return;
+
+    }
+
+
+    map.addSource(
+        sourceId,
+        {
+
+            type: 'geojson',
+
+            data: {
+
+                type: 'Feature',
+
+                properties: {},
+
+                geometry: geometry
+
+            }
+
+        }
+    );
+
+
+    map.addLayer({
+
+        id: 'route-line',
+
+        type: 'line',
+
+        source: sourceId,
+
+        layout: {
+
+            'line-join':
+                'round',
+
+            'line-cap':
+                'round'
+
+        },
+
+        paint: {
+
+            'line-color':
+                '#111111',
+
+            'line-width':
+                6,
+
+            'line-opacity':
+                0.9
+
+        }
+
+    });
+
+}
+
+
+/* ============================================================
+   ENQUADRAR ROTA
+============================================================ */
+
+function fitRoute() {
+
+    if (
+        !userLocation ||
+        !destination
+    ) {
+
+        return;
+
+    }
+
+
+    const bounds =
+        new mapboxgl.LngLatBounds();
+
+
+    bounds.extend(
+        userLocation
+    );
+
+
+    bounds.extend(
+        destination
+    );
+
+
+    map.fitBounds(
+        bounds,
+        {
+
+            padding: {
+
+                top: 120,
+
+                bottom: 300,
+
+                left: 50,
+
+                right: 50
+
+            },
+
+            duration: 1000
+
+        }
+    );
+
+}
+
+
+/* ============================================================
+   DISTÂNCIA
+============================================================ */
+
+function formatDistance(meters) {
+
+    if (meters < 1000) {
+
+        return `${Math.round(meters)} m`;
+
+    }
+
+
+    return (
+        meters / 1000
+    ).toFixed(1) + ' km';
+
+}
+
+
+/* ============================================================
+   TEMPO
+============================================================ */
+
+function formatDuration(seconds) {
+
+    const minutes =
+        Math.round(
+            seconds / 60
+        );
+
+
+    if (minutes < 60) {
+
+        return `${minutes} min`;
+
+    }
+
+
+    const hours =
+        Math.floor(
+            minutes / 60
+        );
+
+
+    const remaining =
+        minutes % 60;
+
+
+    if (remaining === 0) {
+
+        return `${hours}h`;
+
+    }
+
+
+    return `${hours}h ${remaining}min`;
+
+}
+
+
+/* ============================================================
+   TROCAR VEÍCULO
+============================================================ */
+
+document
+    .querySelectorAll('.vehicle')
+    .forEach(button => {
+
+        button.addEventListener(
+            'click',
+            () => {
+
+                document
+                    .querySelectorAll(
+                        '.vehicle'
+                    )
+                    .forEach(
+                        b =>
+                            b.classList
+                                .remove(
+                                    'active'
+                                )
+                    );
+
+
+                button.classList.add(
+                    'active'
+                );
+
+
+                currentVehicle =
+                    button.dataset.type;
+
+
+                if (
+                    userLocation &&
+                    destination
+                ) {
+
+                    calculateRoute();
+
+                }
+
+            }
+        );
+
+    });
+
+
+/* ============================================================
+   BOTÃO GPS
+============================================================ */
+
+document
+    .getElementById('gpsButton')
+    .addEventListener(
+        'click',
+        () => {
+
+            getLocation();
+
+        }
+    );
+
+
+/* ============================================================
+   BOTÃO PESQUISAR
+============================================================ */
+
+document
+    .getElementById('searchButton')
+    .addEventListener(
+        'click',
+        () => {
+
+            const query =
+                searchInput.value.trim();
+
+
+            if (
+                query.length >= 3
+            ) {
+
+                searchAddress(
+                    query
+                );
+
+            }
+
+        }
+    );
+
+
+/* ============================================================
+   INICIAR NAVEGAÇÃO
+============================================================ */
+
+document
+    .getElementById('navigate')
+    .addEventListener(
+        'click',
+        () => {
+
+            if (
+                !destination
+            ) {
+
+                return;
+
+            }
+
+
+            routeActive =
+                !routeActive;
+
+
+            const button =
+                document.getElementById(
+                    'navigate'
+                );
+
+
+            if (routeActive) {
+
+                button.textContent =
+                    '⛔ Encerrar navegação';
+
+
+                setStatus(
+                    'Navegação iniciada.'
+                );
+
+
+                startNavigation();
+
+            } else {
+
+                button.textContent =
+                    '🧭 Iniciar navegação';
+
+
+                stopNavigation();
+
+
+                setStatus(
+                    'Navegação encerrada.'
+                );
+
+            }
+
+        }
+    );
+
+
+/* ============================================================
+   NAVEGAÇÃO GPS
+============================================================ */
+
+function startNavigation() {
+
+    if (
+        !navigator.geolocation
+    ) {
+
+        return;
+
+    }
+
+
+    watchId =
+        navigator.geolocation.watchPosition(
+
+            position => {
+
+                userLocation = [
+
+                    position.coords.longitude,
+
+                    position.coords.latitude
+
+                ];
+
+
+                updateUserMarker();
+
+
+                /*
+                 * Recalcula a rota usando
+                 * a nova posição.
+                 */
+
+                if (destination) {
+
+                    calculateRoute();
+
+                }
+
+
+                /*
+                 * Mantém o mapa
+                 * acompanhando o usuário.
+                 */
+
+                map.easeTo({
+
+                    center: userLocation,
+
+                    duration: 700
+
+                });
+
+            },
+
+            error => {
+
+                console.error(
+                    error
+                );
+
+            },
+
+            {
+
+                enableHighAccuracy:
+                    true,
+
+                maximumAge:
+                    1000,
+
+                timeout:
+                    10000
+
+            }
+
+        );
+
+}
+
+
+/* ============================================================
+   PARAR NAVEGAÇÃO
+============================================================ */
+
+function stopNavigation() {
+
+    if (
+        watchId !== null
+    ) {
+
+        navigator.geolocation
+            .clearWatch(
+                watchId
+            );
+
+        watchId =
+            null;
+
+    }
+
+}
+
+
+/* ============================================================
+   STATUS
+============================================================ */
+
+function setStatus(message) {
+
+    document.getElementById(
+        'status'
+    ).textContent =
+        message;
+
+}
+
+
+/* ============================================================
+   INICIAR GPS QUANDO MAPA CARREGAR
+============================================================ */
+
+map.on(
+    'load',
+    () => {
+
+        getLocation();
+
+    }
+);
+
+</script>
+
+</body>
+</html>
+```
