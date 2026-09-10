@@ -1,2460 +1,284 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
-    >
-
-    <title>Meu Maps</title>
-
-    <!-- MAPBOX -->
-    <link
-        href="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.css"
-        rel="stylesheet"
-    >
-
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.js"></script>
-
-
-    <style>
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-        }
-
-
-        /* =========================
-           MAPA
-        ========================= */
-
-        #map {
-
-            position: absolute;
-
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-
-            width: 100%;
-            height: 100%;
-
-        }
-
-
-        /* =========================
-           TOPO
-        ========================= */
-
-        .top {
-
-            position: absolute;
-
-            top: 15px;
-            left: 15px;
-            right: 15px;
-
-            z-index: 20;
-
-            max-width: 600px;
-
-            margin: auto;
-
-        }
-
-
-        .panel {
-
-            background: white;
-
-            border-radius: 16px;
-
-            padding: 10px;
-
-            box-shadow:
-                0 4px 20px rgba(0,0,0,.22);
-
-        }
-
-
-        .search {
-
-            display: flex;
-
-            gap: 8px;
-
-        }
-
-
-        #destination {
-
-            flex: 1;
-
-            border: none;
-
-            outline: none;
-
-            font-size: 16px;
-
-            padding: 13px;
-
-            min-width: 0;
-
-        }
-
-
-        #search {
-
-            border: none;
-
-            background: #1976d2;
-
-            color: white;
-
-            border-radius: 10px;
-
-            padding: 0 17px;
-
-            cursor: pointer;
-
-            font-size: 15px;
-
-        }
-
-
-        #search:active {
-
-            transform: scale(.97);
-
-        }
-
-
-        /* =========================
-           RESULTADOS
-        ========================= */
-
-        #results {
-
-            display: none;
-
-            margin-top: 5px;
-
-            max-height: 250px;
-
-            overflow-y: auto;
-
-        }
-
-
-        .result {
-
-            padding: 13px 10px;
-
-            border-top: 1px solid #eee;
-
-            cursor: pointer;
-
-            font-size: 14px;
-
-        }
-
-
-        .result:hover {
-
-            background: #f5f5f5;
-
-        }
-
-
-        /* =========================
-           VEÍCULOS
-        ========================= */
-
-        .vehicles {
-
-            display: flex;
-
-            gap: 7px;
-
-            margin-top: 9px;
-
-        }
-
-
-        .vehicle {
-
-            flex: 1;
-
-            border: 1px solid #ddd;
-
-            background: white;
-
-            border-radius: 9px;
-
-            padding: 9px 4px;
-
-            cursor: pointer;
-
-        }
-
-
-        .vehicle.active {
-
-            background: #1976d2;
-
-            color: white;
-
-            border-color: #1976d2;
-
-        }
-
-
-        /* =========================
-           STATUS
-        ========================= */
-
-        #status {
-
-            text-align: center;
-
-            font-size: 12px;
-
-            color: #666;
-
-            padding-top: 8px;
-
-        }
-
-
-        /* =========================
-           ROTA
-        ========================= */
-
-        .route {
-
-            position: absolute;
-
-            z-index: 20;
-
-            left: 15px;
-            right: 15px;
-            bottom: 15px;
-
-            max-width: 600px;
-
-            margin: auto;
-
-            background: white;
-
-            border-radius: 17px;
-
-            padding: 15px;
-
-            box-shadow:
-                0 4px 20px rgba(0,0,0,.22);
-
-            display: none;
-
-        }
-
-
-        .route-info {
-
-            display: flex;
-
-            justify-content: space-between;
-
-            align-items: center;
-
-            margin-bottom: 12px;
-
-        }
-
-
-        #distance {
-
-            font-size: 23px;
-
-            font-weight: bold;
-
-        }
-
-
-        #duration {
-
-            color: #555;
-
-            margin-top: 4px;
-
-        }
-
-
-        .buttons {
-
-            display: flex;
-
-            gap: 8px;
-
-        }
-
-
-        button {
-
-            cursor: pointer;
-
-        }
-
-
-        #start {
-
-            flex: 1;
-
-            border: none;
-
-            border-radius: 11px;
-
-            background: #1976d2;
-
-            color: white;
-
-            padding: 13px;
-
-            font-size: 15px;
-
-        }
-
-
-        #recalculate {
-
-            border: none;
-
-            border-radius: 11px;
-
-            background: #eee;
-
-            padding: 0 18px;
-
-            font-size: 20px;
-
-        }
-
-
-        /* =========================
-           NAVEGAÇÃO
-        ========================= */
-
-        #navigation {
-
-            position: absolute;
-
-            z-index: 30;
-
-            top: 15px;
-
-            left: 15px;
-            right: 15px;
-
-            max-width: 600px;
-
-            margin: auto;
-
-            display: none;
-
-        }
-
-
-        .navigation-box {
-
-            background: white;
-
-            border-radius: 17px;
-
-            padding: 15px;
-
-            box-shadow:
-                0 4px 20px rgba(0,0,0,.25);
-
-        }
-
-
-        .next {
-
-            font-size: 12px;
-
-            color: #666;
-
-            margin-bottom: 5px;
-
-        }
-
-
-        #instruction {
-
-            font-size: 20px;
-
-            font-weight: bold;
-
-            line-height: 1.25;
-
-        }
-
-
-        #navDistance {
-
-            color: #555;
-
-            margin-top: 8px;
-
-            font-size: 14px;
-
-        }
-
-
-        #stop {
-
-            width: 100%;
-
-            margin-top: 12px;
-
-            border: none;
-
-            border-radius: 10px;
-
-            padding: 11px;
-
-            background: #eee;
-
-        }
-
-
-        /* =========================
-           LOCALIZAÇÃO
-        ========================= */
-
-        #locate {
-
-            position: absolute;
-
-            z-index: 15;
-
-            right: 15px;
-
-            bottom: 180px;
-
-            width: 50px;
-
-            height: 50px;
-
-            border-radius: 50%;
-
-            border: none;
-
-            background: white;
-
-            box-shadow:
-                0 3px 14px rgba(0,0,0,.25);
-
-            font-size: 22px;
-
-        }
-
-
-        /* =========================
-           LOADING
-        ========================= */
-
-        #loading {
-
-            position: absolute;
-
-            z-index: 100;
-
-            top: 50%;
-            left: 50%;
-
-            transform:
-                translate(-50%, -50%);
-
-            background: white;
-
-            border-radius: 14px;
-
-            padding: 18px 25px;
-
-            box-shadow:
-                0 4px 20px rgba(0,0,0,.25);
-
-            display: none;
-
-            text-align: center;
-
-        }
-
-
-        #loadingTitle {
-
-            font-weight: bold;
-
-        }
-
-
-        #loadingText {
-
-            color: #666;
-
-            font-size: 13px;
-
-            margin-top: 5px;
-
-        }
-
-
-        /* =========================
-           MOBILE
-        ========================= */
-
-        @media(max-width:600px) {
-
-            .top {
-
-                top: 10px;
-                left: 10px;
-                right: 10px;
-
-            }
-
-            .route {
-
-                left: 10px;
-                right: 10px;
-                bottom: 10px;
-
-            }
-
-            #navigation {
-
-                top: 10px;
-                left: 10px;
-                right: 10px;
-
-            }
-
-        }
-
-    </style>
-
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
+
+  <title>Meu GPS</title>
+
+  <link
+    href="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.css"
+    rel="stylesheet"
+  />
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #status {
+      position: fixed;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+
+      background: white;
+      padding: 12px 18px;
+      border-radius: 12px;
+
+      box-shadow: 0 3px 15px rgba(0,0,0,.2);
+
+      font-size: 15px;
+      font-weight: bold;
+
+      max-width: 90%;
+      text-align: center;
+    }
+
+    #info {
+      position: fixed;
+      bottom: 20px;
+      left: 15px;
+      right: 15px;
+
+      z-index: 10;
+
+      background: white;
+      border-radius: 15px;
+      padding: 15px;
+
+      box-shadow: 0 3px 15px rgba(0,0,0,.2);
+
+      display: none;
+    }
+
+    #info div {
+      margin: 5px 0;
+    }
+
+    .mapboxgl-ctrl-geolocate {
+      width: 44px !important;
+      height: 44px !important;
+    }
+  </style>
 </head>
-
 
 <body>
 
+  <div id="map"></div>
 
-<!-- =====================================================
-     MAPA
-===================================================== -->
+  <div id="status">
+    Iniciando GPS...
+  </div>
 
-<div id="map"></div>
+  <div id="info">
+    <div><strong>GPS ativo</strong></div>
+    <div id="lat">Latitude: --</div>
+    <div id="lng">Longitude: --</div>
+    <div id="accuracy">Precisão: --</div>
+  </div>
 
+  <script>
 
-<!-- =====================================================
-     PESQUISA
-===================================================== -->
+    // =====================================================
+    // MAPBOX
+    // =====================================================
 
-<div
-    class="top"
-    id="topPanel"
->
+    mapboxgl.accessToken =
+      'pk.eyJ1IjoibGVvbmFyZG9zb3V6YXMiLCJhIjoiY21gODQ0OG0wMDRuMDJycGw1N3ByeGNpbiJ9.yj4IXhTZD-oU1to8PzPsgA';
 
-    <div class="panel">
 
-        <div class="search">
+    // =====================================================
+    // VERIFICAR SUPORTE
+    // =====================================================
 
-            <input
-                id="destination"
-                type="text"
-                placeholder="Para onde você vai?"
-                autocomplete="off"
-            >
+    if (!mapboxgl.supported()) {
 
-            <button id="search">
-                Buscar
-            </button>
+      document.getElementById('status').textContent =
+        'Seu navegador não suporta o mapa.';
 
-        </div>
+    } else {
 
+      // ===================================================
+      // CRIAR MAPA
+      // ===================================================
 
-        <div id="results"></div>
-
-
-        <div class="vehicles">
-
-            <button
-                class="vehicle active"
-                data-profile="driving-traffic"
-            >
-                🚗 Carro
-            </button>
-
-            <button
-                class="vehicle"
-                data-profile="driving"
-            >
-                🏍️ Moto
-            </button>
-
-            <button
-                class="vehicle"
-                data-profile="cycling"
-            >
-                🚲 Bike
-            </button>
-
-        </div>
-
-
-        <div id="status">
-            Iniciando mapa...
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- =====================================================
-     ROTA
-===================================================== -->
-
-<div
-    class="route"
-    id="routePanel"
->
-
-    <div class="route-info">
-
-        <div>
-
-            <div id="distance">
-                --
-            </div>
-
-            <div id="duration">
-                --
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <div class="buttons">
-
-        <button id="start">
-            ▶ Iniciar viagem
-        </button>
-
-        <button id="recalculate">
-            ↻
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- =====================================================
-     NAVEGAÇÃO
-===================================================== -->
-
-<div id="navigation">
-
-    <div class="navigation-box">
-
-        <div class="next">
-            PRÓXIMA INSTRUÇÃO
-        </div>
-
-        <div id="instruction">
-            Siga pela rota
-        </div>
-
-        <div id="navDistance">
-            --
-        </div>
-
-        <button id="stop">
-            Encerrar viagem
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- =====================================================
-     LOCALIZAR
-===================================================== -->
-
-<button id="locate">
-    📍
-</button>
-
-
-<!-- =====================================================
-     LOADING
-===================================================== -->
-
-<div id="loading">
-
-    <div id="loadingTitle">
-        Aguarde
-    </div>
-
-    <div id="loadingText">
-        Processando...
-    </div>
-
-</div>
-
-
-<script>
-
-
-/* =====================================================
-   TOKEN MAPBOX
-===================================================== */
-
-mapboxgl.accessToken =
-    'pk.eyJ1IjoibGVvbmFyZG9zb3V6YXMiLCJhIjoiY21gODQ4OG0wMDRuMDJycGw1N3ByeGNpbiJ9.yj4IXhTZD-oU1to8PzPsgA';
-
-
-/* =====================================================
-   VARIÁVEIS
-===================================================== */
-
-let map;
-
-let userPosition = null;
-
-let destination = null;
-
-let userMarker = null;
-
-let destinationMarker = null;
-
-let currentRoute = null;
-
-let currentSteps = [];
-
-let currentStep = 0;
-
-let selectedProfile =
-    'driving-traffic';
-
-let gpsWatch = null;
-
-let navigating = false;
-
-
-/* =====================================================
-   ELEMENTOS
-===================================================== */
-
-const destinationInput =
-    document.getElementById(
-        'destination'
-    );
-
-const searchButton =
-    document.getElementById(
-        'search'
-    );
-
-const results =
-    document.getElementById(
-        'results'
-    );
-
-const status =
-    document.getElementById(
-        'status'
-    );
-
-const routePanel =
-    document.getElementById(
-        'routePanel'
-    );
-
-const distanceElement =
-    document.getElementById(
-        'distance'
-    );
-
-const durationElement =
-    document.getElementById(
-        'duration'
-    );
-
-const loading =
-    document.getElementById(
-        'loading'
-    );
-
-const loadingText =
-    document.getElementById(
-        'loadingText'
-    );
-
-const instruction =
-    document.getElementById(
-        'instruction'
-    );
-
-const navDistance =
-    document.getElementById(
-        'navDistance'
-    );
-
-const navigation =
-    document.getElementById(
-        'navigation'
-    );
-
-const topPanel =
-    document.getElementById(
-        'topPanel'
-    );
-
-
-/* =====================================================
-   CRIAR MAPA
-===================================================== */
-
-try {
-
-    map = new mapboxgl.Map({
+      const map = new mapboxgl.Map({
 
         container: 'map',
 
-        style:
-            'mapbox://styles/mapbox/streets-v12',
+        style: 'mapbox://styles/mapbox/standard',
 
-        center: [
-            -49.0,
-            -16.0
-        ],
+        center: [-49.8, -15.8],
 
-        zoom: 5,
+        zoom: 5
 
-        attributionControl: true
-
-    });
+      });
 
 
-} catch (error) {
+      // ===================================================
+      // CONTROLES DE ZOOM
+      // ===================================================
 
-    console.error(error);
-
-    status.textContent =
-        'Erro ao iniciar o Mapbox.';
-
-}
-
-
-/* =====================================================
-   MAPA CARREGOU
-===================================================== */
-
-map.on(
-    'load',
-    () => {
-
-        status.textContent =
-            'Mapa carregado ✓';
-
-        /*
-         * Agora tenta GPS.
-         * O mapa NÃO depende do GPS
-         * para aparecer.
-         */
-
-        getLocation();
-
-    }
-);
+      map.addControl(
+        new mapboxgl.NavigationControl(),
+        'top-right'
+      );
 
 
-/* =====================================================
-   ERRO DO MAPA
-===================================================== */
+      // ===================================================
+      // GPS
+      // ===================================================
 
-map.on(
-    'error',
-    event => {
+      const geolocate = new mapboxgl.GeolocateControl({
 
-        console.error(
-            'MAPBOX ERROR:',
-            event
-        );
+        positionOptions: {
 
-        status.textContent =
-            'Erro no Mapbox. Veja o console.';
+          enableHighAccuracy: true,
 
-    }
-);
+          timeout: 15000,
 
-
-/* =====================================================
-   GPS
-===================================================== */
-
-function getLocation() {
-
-    if (
-        !navigator.geolocation
-    ) {
-
-        status.textContent =
-            'GPS não suportado neste navegador.';
-
-        return;
-
-    }
-
-
-    status.textContent =
-        'Obtendo localização...';
-
-
-    navigator.geolocation.getCurrentPosition(
-
-        position => {
-
-            updateUserPosition(
-                position,
-                true
-            );
+          maximumAge: 0
 
         },
 
-        error => {
+        trackUserLocation: true,
 
-            console.error(
-                'GPS ERROR:',
-                error
-            );
+        showUserLocation: true,
 
+        showUserHeading: true,
 
-            if (
-                error.code === 1
-            ) {
+        showAccuracyCircle: true,
 
-                status.textContent =
-                    'Permissão de localização negada.';
+        fitBoundsOptions: {
 
-            }
-
-            else if (
-                error.code === 2
-            ) {
-
-                status.textContent =
-                    'Localização indisponível.';
-
-            }
-
-            else if (
-                error.code === 3
-            ) {
-
-                status.textContent =
-                    'GPS demorou demais para responder.';
-
-            }
-
-            else {
-
-                status.textContent =
-                    'Erro ao obter localização.';
-
-            }
-
-        },
-
-        {
-
-            enableHighAccuracy: true,
-
-            timeout: 20000,
-
-            maximumAge: 5000
+          maxZoom: 17
 
         }
 
-    );
-
-}
+      });
 
 
-/* =====================================================
-   ATUALIZAR POSIÇÃO
-===================================================== */
-
-function updateUserPosition(
-    position,
-    moveCamera
-) {
-
-    const lng =
-        position.coords.longitude;
-
-    const lat =
-        position.coords.latitude;
+      map.addControl(
+        geolocate,
+        'top-right'
+      );
 
 
-    userPosition =
-        [lng, lat];
+      // ===================================================
+      // MAPA CARREGADO
+      // ===================================================
+
+      map.on('load', function () {
+
+        document.getElementById('status').textContent =
+          'Mapa carregado — toque no botão GPS';
+
+      });
 
 
-    /*
-     * Cria marcador
-     */
+      // ===================================================
+      // GPS ENCONTRADO
+      // ===================================================
 
-    if (
-        !userMarker
-    ) {
+      geolocate.on('geolocate', function (event) {
 
-        const element =
-            document.createElement(
-                'div'
-            );
+        const latitude =
+          event.coords.latitude;
 
+        const longitude =
+          event.coords.longitude;
 
-        element.style.width =
-            '20px';
-
-        element.style.height =
-            '20px';
-
-        element.style.borderRadius =
-            '50%';
-
-        element.style.background =
-            '#1976d2';
-
-        element.style.border =
-            '4px solid white';
-
-        element.style.boxShadow =
-            '0 0 0 2px rgba(0,0,0,.2)';
+        const accuracy =
+          event.coords.accuracy;
 
 
-        userMarker =
-            new mapboxgl.Marker(
-                element
-            )
-            .setLngLat(
-                userPosition
-            )
-            .addTo(map);
-
-    }
-
-    else {
-
-        userMarker.setLngLat(
-            userPosition
-        );
-
-    }
+        document.getElementById('status').textContent =
+          'GPS funcionando';
 
 
-    if (
-        moveCamera
-    ) {
-
-        map.flyTo({
-
-            center:
-                userPosition,
-
-            zoom: 15,
-
-            duration: 1000
-
-        });
-
-    }
+        document.getElementById('info').style.display =
+          'block';
 
 
-    status.textContent =
-        'Localização encontrada ✓';
-
-}
+        document.getElementById('lat').textContent =
+          'Latitude: ' + latitude.toFixed(6);
 
 
-/* =====================================================
-   BUSCA
-===================================================== */
-
-searchButton.addEventListener(
-    'click',
-    searchDestination
-);
+        document.getElementById('lng').textContent =
+          'Longitude: ' + longitude.toFixed(6);
 
 
-destinationInput.addEventListener(
-    'keydown',
-    event => {
+        document.getElementById('accuracy').textContent =
+          'Precisão: ' + Math.round(accuracy) + ' metros';
 
-        if (
-            event.key === 'Enter'
-        ) {
-
-            searchDestination();
-
-        }
-
-    }
-);
+      });
 
 
-async function searchDestination() {
+      // ===================================================
+      // ERRO GPS
+      // ===================================================
 
-    const query =
-        destinationInput.value.trim();
+      geolocate.on('error', function (event) {
+
+        console.error('Erro GPS:', event);
+
+        document.getElementById('status').textContent =
+          'Não foi possível acessar o GPS';
+
+      });
 
 
-    if (
-        !query
-    ) {
+      // ===================================================
+      // INICIANDO GPS
+      // ===================================================
 
-        alert(
-            'Digite um endereço.'
-        );
+      geolocate.on('trackuserlocationstart', function () {
 
-        return;
+        document.getElementById('status').textContent =
+          'Procurando sua localização...';
+
+      });
+
+
+      // ===================================================
+      // GPS PARADO
+      // ===================================================
+
+      geolocate.on('trackuserlocationend', function () {
+
+        document.getElementById('status').textContent =
+          'GPS parado';
+
+      });
 
     }
 
-
-    showLoading(
-        'Pesquisando endereço...'
-    );
-
-
-    results.style.display =
-        'none';
-
-
-    try {
-
-        /*
-         * Geocoding v6
-         */
-
-        const url =
-            'https://api.mapbox.com/search/geocode/v6/forward' +
-
-            '?q=' +
-            encodeURIComponent(query) +
-
-            '&language=pt-BR' +
-
-            '&limit=5' +
-
-            '&access_token=' +
-            encodeURIComponent(
-                mapboxgl.accessToken
-            );
-
-
-        console.log(
-            'GEOCODING:',
-            url
-        );
-
-
-        const response =
-            await fetch(url);
-
-
-        const text =
-            await response.text();
-
-
-        console.log(
-            'GEOCODING RESPONSE:',
-            text
-        );
-
-
-        if (
-            !response.ok
-        ) {
-
-            throw new Error(
-                'Mapbox Geocoding HTTP ' +
-                response.status +
-                ': ' +
-                text
-            );
-
-        }
-
-
-        const data =
-            JSON.parse(text);
-
-
-        if (
-            !data.features ||
-            data.features.length === 0
-        ) {
-
-            hideLoading();
-
-            alert(
-                'Nenhum endereço encontrado.'
-            );
-
-            return;
-
-        }
-
-
-        hideLoading();
-
-
-        showResults(
-            data.features
-        );
-
-
-    }
-
-    catch (error) {
-
-        hideLoading();
-
-        console.error(
-            error
-        );
-
-
-        alert(
-            'Erro na busca:\n\n' +
-            error.message
-        );
-
-
-        status.textContent =
-            'Erro na busca.';
-
-    }
-
-}
-
-
-/* =====================================================
-   RESULTADOS
-===================================================== */
-
-function showResults(
-    features
-) {
-
-    results.innerHTML =
-        '';
-
-
-    features.forEach(
-        feature => {
-
-            const item =
-                document.createElement(
-                    'div'
-                );
-
-
-            item.className =
-                'result';
-
-
-            const name =
-                feature.properties?.full_address ||
-
-                feature.properties?.name ||
-
-                feature.place_name ||
-
-                'Local';
-
-
-            item.textContent =
-                name;
-
-
-            item.addEventListener(
-                'click',
-                () => {
-
-                    chooseDestination(
-                        feature
-                    );
-
-                }
-            );
-
-
-            results.appendChild(
-                item
-            );
-
-        }
-    );
-
-
-    results.style.display =
-        'block';
-
-}
-
-
-/* =====================================================
-   ESCOLHER DESTINO
-===================================================== */
-
-function chooseDestination(
-    feature
-) {
-
-    results.style.display =
-        'none';
-
-
-    const coordinates =
-        feature.geometry.coordinates;
-
-
-    destination =
-        [
-            coordinates[0],
-            coordinates[1]
-        ];
-
-
-    destinationInput.value =
-        feature.properties?.full_address ||
-
-        feature.properties?.name ||
-
-        feature.place_name ||
-
-        'Destino';
-
-
-    /*
-     * Remove marcador antigo
-     */
-
-    if (
-        destinationMarker
-    ) {
-
-        destinationMarker.remove();
-
-    }
-
-
-    /*
-     * Cria novo marcador
-     */
-
-    destinationMarker =
-        new mapboxgl.Marker({
-
-            color: '#e53935'
-
-        })
-        .setLngLat(
-            destination
-        )
-        .addTo(map);
-
-
-    /*
-     * Vai para destino
-     */
-
-    map.flyTo({
-
-        center:
-            destination,
-
-        zoom: 14,
-
-        duration: 1000
-
-    });
-
-
-    /*
-     * Se já temos GPS,
-     * calcula imediatamente.
-     */
-
-    if (
-        userPosition
-    ) {
-
-        calculateRoute();
-
-    }
-
-    else {
-
-        status.textContent =
-            'Destino escolhido. Aguardando GPS...';
-
-    }
-
-}
-
-
-/* =====================================================
-   VEÍCULO
-===================================================== */
-
-document
-    .querySelectorAll(
-        '.vehicle'
-    )
-    .forEach(
-        button => {
-
-            button.addEventListener(
-                'click',
-                () => {
-
-                    document
-                        .querySelectorAll(
-                            '.vehicle'
-                        )
-                        .forEach(
-                            item => {
-
-                                item.classList
-                                    .remove(
-                                        'active'
-                                    );
-
-                            }
-                        );
-
-
-                    button.classList.add(
-                        'active'
-                    );
-
-
-                    selectedProfile =
-                        button.dataset.profile;
-
-
-                    /*
-                     * Se já existe rota,
-                     * recalcula.
-                     */
-
-                    if (
-                        userPosition &&
-                        destination
-                    ) {
-
-                        calculateRoute();
-
-                    }
-
-                }
-            );
-
-        }
-    );
-
-
-/* =====================================================
-   CALCULAR ROTA
-===================================================== */
-
-async function calculateRoute() {
-
-    if (
-        !userPosition
-    ) {
-
-        alert(
-            'Ainda não temos sua localização.'
-        );
-
-        getLocation();
-
-        return;
-
-    }
-
-
-    if (
-        !destination
-    ) {
-
-        return;
-
-    }
-
-
-    showLoading(
-        'Calculando rota...'
-    );
-
-
-    try {
-
-        const origin =
-            userPosition.join(',');
-
-
-        const dest =
-            destination.join(',');
-
-
-        const url =
-            'https://api.mapbox.com/directions/v5/mapbox/' +
-
-            selectedProfile +
-
-            '/' +
-
-            origin +
-
-            ';' +
-
-            dest +
-
-            '?' +
-
-            'alternatives=false' +
-
-            '&overview=full' +
-
-            '&geometries=geojson' +
-
-            '&steps=true' +
-
-            '&language=pt-BR' +
-
-            '&access_token=' +
-
-            encodeURIComponent(
-                mapboxgl.accessToken
-            );
-
-
-        console.log(
-            'DIRECTIONS:',
-            url
-        );
-
-
-        const response =
-            await fetch(url);
-
-
-        const text =
-            await response.text();
-
-
-        console.log(
-            'DIRECTIONS RESPONSE:',
-            text
-        );
-
-
-        if (
-            !response.ok
-        ) {
-
-            throw new Error(
-                'Directions HTTP ' +
-                response.status +
-                ': ' +
-                text
-            );
-
-        }
-
-
-        const data =
-            JSON.parse(text);
-
-
-        if (
-            !data.routes ||
-            data.routes.length === 0
-        ) {
-
-            throw new Error(
-                'Nenhuma rota encontrada.'
-            );
-
-        }
-
-
-        currentRoute =
-            data.routes[0];
-
-
-        currentSteps =
-            currentRoute.legs?.[0]?.steps ||
-            [];
-
-
-        currentStep =
-            0;
-
-
-        /*
-         * Desenha rota
-         */
-
-        drawRoute(
-            currentRoute.geometry
-        );
-
-
-        /*
-         * Informações
-         */
-
-        distanceElement.textContent =
-            formatDistance(
-                currentRoute.distance
-            );
-
-
-        durationElement.textContent =
-            formatDuration(
-                currentRoute.duration
-            );
-
-
-        routePanel.style.display =
-            'block';
-
-
-        hideLoading();
-
-
-        status.textContent =
-            'Rota pronta ✓';
-
-
-        /*
-         * Enquadra rota
-         */
-
-        fitRoute(
-            currentRoute.geometry
-        );
-
-
-    }
-
-    catch (error) {
-
-        hideLoading();
-
-        console.error(
-            'ROUTE ERROR:',
-            error
-        );
-
-
-        alert(
-            'Erro ao calcular rota:\n\n' +
-            error.message
-        );
-
-
-        status.textContent =
-            'Erro ao calcular rota.';
-
-    }
-
-}
-
-
-/* =====================================================
-   DESENHAR ROTA
-===================================================== */
-
-function drawRoute(
-    geometry
-) {
-
-    const geojson = {
-
-        type: 'Feature',
-
-        properties: {},
-
-        geometry: geometry
-
-    };
-
-
-    if (
-        map.getSource(
-            'route'
-        )
-    ) {
-
-        map
-            .getSource(
-                'route'
-            )
-            .setData(
-                geojson
-            );
-
-        return;
-
-    }
-
-
-    map.addSource(
-        'route',
-        {
-
-            type: 'geojson',
-
-            data: geojson
-
-        }
-    );
-
-
-    map.addLayer({
-
-        id: 'route',
-
-        type: 'line',
-
-        source: 'route',
-
-        layout: {
-
-            'line-join':
-                'round',
-
-            'line-cap':
-                'round'
-
-        },
-
-        paint: {
-
-            'line-color':
-                '#1976d2',
-
-            'line-width':
-                7,
-
-            'line-opacity':
-                0.9
-
-        }
-
-    });
-
-}
-
-
-/* =====================================================
-   ENQUADRAR ROTA
-===================================================== */
-
-function fitRoute(
-    geometry
-) {
-
-    const coordinates =
-        geometry.coordinates;
-
-
-    if (
-        !coordinates.length
-    ) {
-
-        return;
-
-    }
-
-
-    const bounds =
-        new mapboxgl.LngLatBounds(
-            coordinates[0],
-            coordinates[0]
-        );
-
-
-    coordinates.forEach(
-        coordinate => {
-
-            bounds.extend(
-                coordinate
-            );
-
-        }
-    );
-
-
-    map.fitBounds(
-        bounds,
-        {
-
-            padding: 90,
-
-            duration: 1000
-
-        }
-    );
-
-}
-
-
-/* =====================================================
-   INICIAR VIAGEM
-===================================================== */
-
-document
-    .getElementById('start')
-    .addEventListener(
-        'click',
-        startNavigation
-    );
-
-
-function startNavigation() {
-
-    if (
-        !currentRoute
-    ) {
-
-        alert(
-            'Primeiro escolha um destino e calcule a rota.'
-        );
-
-        return;
-
-    }
-
-
-    navigating =
-        true;
-
-
-    currentStep =
-        0;
-
-
-    topPanel.style.display =
-        'none';
-
-
-    routePanel.style.display =
-        'none';
-
-
-    navigation.style.display =
-        'block';
-
-
-    updateInstruction();
-
-
-    /*
-     * GPS contínuo
-     */
-
-    if (
-        gpsWatch !== null
-    ) {
-
-        navigator.geolocation
-            .clearWatch(
-                gpsWatch
-            );
-
-    }
-
-
-    gpsWatch =
-        navigator.geolocation.watchPosition(
-
-            position => {
-
-                updateUserPosition(
-                    position,
-                    false
-                );
-
-
-                /*
-                 * Durante a viagem,
-                 * somente atualiza a posição.
-                 *
-                 * Não recalcula a API
-                 * a cada GPS.
-                 */
-
-                updateNavigation();
-
-            },
-
-
-            error => {
-
-                console.error(
-                    error
-                );
-
-            },
-
-
-            {
-
-                enableHighAccuracy:
-                    true,
-
-                maximumAge:
-                    1000,
-
-                timeout:
-                    10000
-
-            }
-
-        );
-
-
-}
-
-
-/* =====================================================
-   ATUALIZAR NAVEGAÇÃO
-===================================================== */
-
-function updateNavigation() {
-
-    if (
-        !navigating ||
-        !userPosition ||
-        !destination
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-     * Distância até destino
-     */
-
-    const destinationDistance =
-        distanceBetween(
-            userPosition,
-            destination
-        );
-
-
-    /*
-     * Chegou
-     */
-
-    if (
-        destinationDistance < 30
-    ) {
-
-        finishNavigation();
-
-        return;
-
-    }
-
-
-    /*
-     * Próxima etapa
-     */
-
-    const step =
-        currentSteps[
-            currentStep
-        ];
-
-
-    if (
-        !step
-    ) {
-
-        return;
-
-    }
-
-
-    const maneuver =
-        step.maneuver;
-
-
-    if (
-        !maneuver ||
-        !maneuver.location
-    ) {
-
-        return;
-
-    }
-
-
-    const distance =
-        distanceBetween(
-            userPosition,
-            maneuver.location
-        );
-
-
-    navDistance.textContent =
-        formatDistance(
-            distance
-        );
-
-
-    /*
-     * Quando chega perto
-     * da próxima manobra,
-     * avança.
-     */
-
-    if (
-        distance < 35 &&
-        currentStep <
-            currentSteps.length - 1
-    ) {
-
-        currentStep++;
-
-        updateInstruction();
-
-    }
-
-}
-
-
-/* =====================================================
-   INSTRUÇÃO
-===================================================== */
-
-function updateInstruction() {
-
-    const step =
-        currentSteps[
-            currentStep
-        ];
-
-
-    if (
-        !step
-    ) {
-
-        instruction.textContent =
-            'Continue até o destino';
-
-        return;
-
-    }
-
-
-    instruction.textContent =
-        step.maneuver?.instruction ||
-        'Continue pela rota';
-
-
-    navDistance.textContent =
-        formatDistance(
-            step.distance || 0
-        );
-
-}
-
-
-/* =====================================================
-   ENCERRAR
-===================================================== */
-
-document
-    .getElementById('stop')
-    .addEventListener(
-        'click',
-        stopNavigation
-    );
-
-
-function stopNavigation() {
-
-    navigating =
-        false;
-
-
-    if (
-        gpsWatch !== null
-    ) {
-
-        navigator.geolocation
-            .clearWatch(
-                gpsWatch
-            );
-
-        gpsWatch =
-            null;
-
-    }
-
-
-    navigation.style.display =
-        'none';
-
-
-    topPanel.style.display =
-        'block';
-
-
-    routePanel.style.display =
-        'block';
-
-
-    status.textContent =
-        'Viagem encerrada.';
-
-}
-
-
-/* =====================================================
-   CHEGADA
-===================================================== */
-
-function finishNavigation() {
-
-    navigating =
-        false;
-
-
-    if (
-        gpsWatch !== null
-    ) {
-
-        navigator.geolocation
-            .clearWatch(
-                gpsWatch
-            );
-
-        gpsWatch =
-            null;
-
-    }
-
-
-    navigation.style.display =
-        'none';
-
-
-    topPanel.style.display =
-        'block';
-
-
-    alert(
-        'Você chegou ao destino! 🏁'
-    );
-
-
-    status.textContent =
-        'Destino alcançado ✓';
-
-}
-
-
-/* =====================================================
-   RECALCULAR
-===================================================== */
-
-document
-    .getElementById('recalculate')
-    .addEventListener(
-        'click',
-        () => {
-
-            if (
-                userPosition &&
-                destination
-            ) {
-
-                calculateRoute();
-
-            }
-
-        }
-    );
-
-
-/* =====================================================
-   BOTÃO LOCALIZAÇÃO
-===================================================== */
-
-document
-    .getElementById('locate')
-    .addEventListener(
-        'click',
-        () => {
-
-            if (
-                userPosition
-            ) {
-
-                map.flyTo({
-
-                    center:
-                        userPosition,
-
-                    zoom: 17,
-
-                    duration: 700
-
-                });
-
-            }
-
-            else {
-
-                getLocation();
-
-            }
-
-        }
-    );
-
-
-/* =====================================================
-   DISTÂNCIA
-===================================================== */
-
-function distanceBetween(
-    a,
-    b
-) {
-
-    const R =
-        6371000;
-
-
-    const lat1 =
-        a[1] *
-        Math.PI /
-        180;
-
-
-    const lat2 =
-        b[1] *
-        Math.PI /
-        180;
-
-
-    const dLat =
-        (b[1] - a[1]) *
-        Math.PI /
-        180;
-
-
-    const dLng =
-        (b[0] - a[0]) *
-        Math.PI /
-        180;
-
-
-    const x =
-        Math.sin(
-            dLat / 2
-        ) ** 2 +
-
-        Math.cos(lat1) *
-        Math.cos(lat2) *
-
-        Math.sin(
-            dLng / 2
-        ) ** 2;
-
-
-    const c =
-        2 *
-        Math.atan2(
-            Math.sqrt(x),
-            Math.sqrt(1 - x)
-        );
-
-
-    return R * c;
-
-}
-
-
-/* =====================================================
-   FORMATA DISTÂNCIA
-===================================================== */
-
-function formatDistance(
-    meters
-) {
-
-    if (
-        meters < 1000
-    ) {
-
-        return (
-            Math.round(meters) +
-            ' m'
-        );
-
-    }
-
-
-    return (
-        (meters / 1000)
-        .toFixed(1)
-        .replace('.', ',') +
-        ' km'
-    );
-
-}
-
-
-/* =====================================================
-   FORMATA TEMPO
-===================================================== */
-
-function formatDuration(
-    seconds
-) {
-
-    const minutes =
-        Math.round(
-            seconds / 60
-        );
-
-
-    if (
-        minutes < 60
-    ) {
-
-        return (
-            minutes +
-            ' min'
-        );
-
-    }
-
-
-    const hours =
-        Math.floor(
-            minutes / 60
-        );
-
-
-    const rest =
-        minutes % 60;
-
-
-    return (
-        hours +
-        ' h ' +
-        rest +
-        ' min'
-    );
-
-}
-
-
-/* =====================================================
-   LOADING
-===================================================== */
-
-function showLoading(
-    text
-) {
-
-    loadingText.textContent =
-        text;
-
-    loading.style.display =
-        'block';
-
-}
-
-
-function hideLoading() {
-
-    loading.style.display =
-        'none';
-
-}
-
-
-/* =====================================================
-   FECHAR RESULTADOS
-===================================================== */
-
-document.addEventListener(
-    'click',
-    event => {
-
-        if (
-            !event.target.closest(
-                '.panel'
-            )
-        ) {
-
-            results.style.display =
-                'none';
-
-        }
-
-    }
-);
-
-</script>
+  </script>
 
 </body>
 </html>
