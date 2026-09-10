@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -13,11 +14,12 @@
   <link
     href="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.css"
     rel="stylesheet"
-  />
+  >
 
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.js"></script>
 
   <style>
+
     * {
       box-sizing: border-box;
     }
@@ -39,51 +41,155 @@
       height: 100%;
     }
 
-    #status {
+    /* =========================
+       BUSCA
+    ========================= */
+
+    #searchBox {
       position: fixed;
       top: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-
-      background: white;
-      padding: 12px 18px;
-      border-radius: 12px;
-
-      box-shadow: 0 3px 15px rgba(0,0,0,.2);
-
-      font-size: 15px;
-      font-weight: bold;
-
-      max-width: 90%;
-      text-align: center;
-    }
-
-    #info {
-      position: fixed;
-      bottom: 20px;
       left: 15px;
       right: 15px;
+      z-index: 20;
+    }
 
-      z-index: 10;
+    #searchInput {
+      width: 100%;
+      height: 52px;
+
+      border: none;
+      outline: none;
+
+      border-radius: 14px;
+
+      padding: 0 18px;
+
+      font-size: 16px;
 
       background: white;
-      border-radius: 15px;
-      padding: 15px;
+
+      box-shadow: 0 3px 15px rgba(0,0,0,.25);
+    }
+
+    #results {
+      margin-top: 6px;
+
+      background: white;
+
+      border-radius: 12px;
+
+      overflow: hidden;
 
       box-shadow: 0 3px 15px rgba(0,0,0,.2);
 
       display: none;
     }
 
-    #info div {
-      margin: 5px 0;
+    .result {
+      padding: 14px 16px;
+
+      border-bottom: 1px solid #eee;
+
+      cursor: pointer;
+
+      font-size: 15px;
     }
 
-    .mapboxgl-ctrl-geolocate {
-      width: 44px !important;
-      height: 44px !important;
+    .result:last-child {
+      border-bottom: none;
     }
+
+    .result:hover {
+      background: #f3f3f3;
+    }
+
+    /* =========================
+       STATUS
+    ========================= */
+
+    #status {
+      position: fixed;
+
+      bottom: 20px;
+      left: 15px;
+      right: 15px;
+
+      z-index: 20;
+
+      background: white;
+
+      padding: 14px;
+
+      border-radius: 14px;
+
+      text-align: center;
+
+      font-size: 15px;
+      font-weight: bold;
+
+      box-shadow: 0 3px 15px rgba(0,0,0,.22);
+    }
+
+    /* =========================
+       GPS INFO
+    ========================= */
+
+    #gpsInfo {
+      position: fixed;
+
+      bottom: 80px;
+
+      left: 15px;
+      right: 15px;
+
+      z-index: 20;
+
+      background: white;
+
+      border-radius: 14px;
+
+      padding: 12px 15px;
+
+      box-shadow: 0 3px 15px rgba(0,0,0,.2);
+
+      display: none;
+
+      font-size: 13px;
+    }
+
+    /* =========================
+       BOTÃO GPS
+    ========================= */
+
+    #gpsButton {
+
+      position: fixed;
+
+      right: 15px;
+      bottom: 145px;
+
+      z-index: 30;
+
+      width: 52px;
+      height: 52px;
+
+      border: none;
+
+      border-radius: 50%;
+
+      background: white;
+
+      box-shadow: 0 3px 15px rgba(0,0,0,.25);
+
+      font-size: 24px;
+
+      cursor: pointer;
+    }
+
+    #gpsButton:active {
+      transform: scale(.95);
+    }
+
   </style>
 </head>
 
@@ -91,47 +197,101 @@
 
   <div id="map"></div>
 
-  <div id="status">
-    Iniciando GPS...
+  <!-- BUSCA -->
+
+  <div id="searchBox">
+
+    <input
+      id="searchInput"
+      type="search"
+      placeholder="Para onde você quer ir?"
+      autocomplete="off"
+    >
+
+    <div id="results"></div>
+
   </div>
 
-  <div id="info">
-    <div><strong>GPS ativo</strong></div>
-    <div id="lat">Latitude: --</div>
-    <div id="lng">Longitude: --</div>
-    <div id="accuracy">Precisão: --</div>
+  <!-- GPS -->
+
+  <button id="gpsButton" title="Minha localização">
+    📍
+  </button>
+
+  <!-- INFORMAÇÕES GPS -->
+
+  <div id="gpsInfo">
+
+    <div>
+      <strong>GPS ativo</strong>
+    </div>
+
+    <div id="coordinates">
+      Procurando localização...
+    </div>
+
   </div>
+
+  <!-- STATUS -->
+
+  <div id="status">
+    Carregando mapa...
+  </div>
+
 
   <script>
 
-    // =====================================================
-    // MAPBOX
-    // =====================================================
+    /*
+    =====================================================
+    TOKEN MAPBOX
+    =====================================================
+    */
 
     mapboxgl.accessToken =
       'pk.eyJ1IjoibGVvbmFyZG9zb3V6YXMiLCJhIjoiY21gODQ0OG0wMDRuMDJycGw1N3ByeGNpbiJ9.yj4IXhTZD-oU1to8PzPsgA';
 
 
-    // =====================================================
-    // VERIFICAR SUPORTE
-    // =====================================================
+    /*
+    =====================================================
+    VARIÁVEIS
+    =====================================================
+    */
 
-    if (!mapboxgl.supported()) {
+    let map;
 
-      document.getElementById('status').textContent =
-        'Seu navegador não suporta o mapa.';
+    let userMarker = null;
 
-    } else {
+    let currentPosition = null;
 
-      // ===================================================
-      // CRIAR MAPA
-      // ===================================================
+    let destinationMarker = null;
 
-      const map = new mapboxgl.Map({
+
+    /*
+    =====================================================
+    STATUS
+    =====================================================
+    */
+
+    function status(text) {
+
+      document.getElementById('status').textContent = text;
+
+    }
+
+
+    /*
+    =====================================================
+    CRIAR MAPA
+    =====================================================
+    */
+
+    try {
+
+      map = new mapboxgl.Map({
 
         container: 'map',
 
-        style: 'mapbox://styles/mapbox/standard',
+        style: 'mapbox://styles/mapbox/streets-v12',
 
         center: [-49.8, -15.8],
 
@@ -139,22 +299,78 @@
 
       });
 
+    } catch (error) {
 
-      // ===================================================
-      // CONTROLES DE ZOOM
-      // ===================================================
+      console.error(error);
 
-      map.addControl(
-        new mapboxgl.NavigationControl(),
-        'top-right'
-      );
+      status('Erro ao criar o mapa');
+
+    }
 
 
-      // ===================================================
-      // GPS
-      // ===================================================
+    /*
+    =====================================================
+    MAPA CARREGADO
+    =====================================================
+    */
 
-      const geolocate = new mapboxgl.GeolocateControl({
+    map.on('load', function () {
+
+      status('Mapa carregado. Ative o GPS.');
+
+    });
+
+
+    /*
+    =====================================================
+    ERRO DO MAPA
+    =====================================================
+    */
+
+    map.on('error', function (event) {
+
+      console.error('MAPBOX ERROR:', event);
+
+      if (
+        event &&
+        event.error &&
+        event.error.message
+      ) {
+
+        status(
+          'Erro Mapbox: ' +
+          event.error.message
+        );
+
+      } else {
+
+        status('Erro ao carregar o mapa');
+
+      }
+
+    });
+
+
+    /*
+    =====================================================
+    CONTROLE DE ZOOM
+    =====================================================
+    */
+
+    map.addControl(
+      new mapboxgl.NavigationControl(),
+      'top-right'
+    );
+
+
+    /*
+    =====================================================
+    GPS
+    =====================================================
+    */
+
+    const geolocate =
+      new mapboxgl.GeolocateControl({
 
         positionOptions: {
 
@@ -183,29 +399,21 @@
       });
 
 
-      map.addControl(
-        geolocate,
-        'top-right'
-      );
+    map.addControl(
+      geolocate,
+      'top-right'
+    );
 
 
-      // ===================================================
-      // MAPA CARREGADO
-      // ===================================================
+    /*
+    =====================================================
+    GPS ENCONTRADO
+    =====================================================
+    */
 
-      map.on('load', function () {
-
-        document.getElementById('status').textContent =
-          'Mapa carregado — toque no botão GPS';
-
-      });
-
-
-      // ===================================================
-      // GPS ENCONTRADO
-      // ===================================================
-
-      geolocate.on('geolocate', function (event) {
+    geolocate.on(
+      'geolocate',
+      function(event) {
 
         const latitude =
           event.coords.latitude;
@@ -217,68 +425,486 @@
           event.coords.accuracy;
 
 
-        document.getElementById('status').textContent =
-          'GPS funcionando';
+        currentPosition = {
+
+          latitude,
+          longitude
+
+        };
 
 
-        document.getElementById('info').style.display =
+        /*
+        ===============================
+        MARCADOR DO USUÁRIO
+        ===============================
+        */
+
+        if (!userMarker) {
+
+          userMarker =
+            new mapboxgl.Marker({
+
+              color: '#1976d2'
+
+            })
+            .setLngLat([
+              longitude,
+              latitude
+            ])
+            .addTo(map);
+
+        } else {
+
+          userMarker.setLngLat([
+            longitude,
+            latitude
+          ]);
+
+        }
+
+
+        /*
+        ===============================
+        INFORMAÇÕES
+        ===============================
+        */
+
+        document.getElementById(
+          'gpsInfo'
+        ).style.display = 'block';
+
+
+        document.getElementById(
+          'coordinates'
+        ).textContent =
+
+          'Lat: ' +
+          latitude.toFixed(6) +
+
+          ' | Lng: ' +
+          longitude.toFixed(6) +
+
+          ' | Precisão: ' +
+
+          Math.round(accuracy) +
+
+          ' m';
+
+
+        status('GPS funcionando');
+
+      }
+    );
+
+
+    /*
+    =====================================================
+    GPS COMEÇOU
+    =====================================================
+    */
+
+    geolocate.on(
+      'trackuserlocationstart',
+      function() {
+
+        status(
+          'Procurando sua localização...'
+        );
+
+      }
+    );
+
+
+    /*
+    =====================================================
+    GPS PAROU
+    =====================================================
+    */
+
+    geolocate.on(
+      'trackuserlocationend',
+      function() {
+
+        status('GPS parado');
+
+      }
+    );
+
+
+    /*
+    =====================================================
+    ERRO GPS
+    =====================================================
+    */
+
+    geolocate.on(
+      'error',
+      function(event) {
+
+        console.error(
+          'GPS ERROR:',
+          event
+        );
+
+        status(
+          'Não foi possível acessar o GPS'
+        );
+
+      }
+    );
+
+
+    /*
+    =====================================================
+    BOTÃO GPS
+    =====================================================
+    */
+
+    document
+      .getElementById('gpsButton')
+      .addEventListener(
+        'click',
+        function() {
+
+          if (currentPosition) {
+
+            map.flyTo({
+
+              center: [
+
+                currentPosition.longitude,
+
+                currentPosition.latitude
+
+              ],
+
+              zoom: 17,
+
+              duration: 1000
+
+            });
+
+          } else {
+
+            geolocate.trigger();
+
+          }
+
+        }
+      );
+
+
+    /*
+    =====================================================
+    BUSCA
+    =====================================================
+    */
+
+    const searchInput =
+      document.getElementById(
+        'searchInput'
+      );
+
+    const results =
+      document.getElementById(
+        'results'
+      );
+
+
+    let searchTimer = null;
+
+
+    searchInput.addEventListener(
+      'input',
+      function() {
+
+        const text =
+          searchInput.value.trim();
+
+
+        clearTimeout(searchTimer);
+
+
+        if (text.length < 3) {
+
+          results.style.display =
+            'none';
+
+          results.innerHTML = '';
+
+          return;
+
+        }
+
+
+        searchTimer =
+          setTimeout(
+            function() {
+
+              searchPlace(text);
+
+            },
+            500
+          );
+
+      }
+    );
+
+
+    /*
+    =====================================================
+    PESQUISAR LOCAL
+    =====================================================
+    */
+
+    async function searchPlace(query) {
+
+      try {
+
+        results.style.display =
           'block';
 
-
-        document.getElementById('lat').textContent =
-          'Latitude: ' + latitude.toFixed(6);
-
-
-        document.getElementById('lng').textContent =
-          'Longitude: ' + longitude.toFixed(6);
+        results.innerHTML =
+          '<div class="result">Pesquisando...</div>';
 
 
-        document.getElementById('accuracy').textContent =
-          'Precisão: ' + Math.round(accuracy) + ' metros';
+        const url =
 
-      });
+          'https://api.mapbox.com/search/geocode/v6/forward' +
 
+          '?q=' +
+          encodeURIComponent(query) +
 
-      // ===================================================
-      // ERRO GPS
-      // ===================================================
+          '&limit=5' +
 
-      geolocate.on('error', function (event) {
+          '&language=pt-BR' +
 
-        console.error('Erro GPS:', event);
+          '&country=BR' +
 
-        document.getElementById('status').textContent =
-          'Não foi possível acessar o GPS';
-
-      });
-
-
-      // ===================================================
-      // INICIANDO GPS
-      // ===================================================
-
-      geolocate.on('trackuserlocationstart', function () {
-
-        document.getElementById('status').textContent =
-          'Procurando sua localização...';
-
-      });
+          '&access_token=' +
+          encodeURIComponent(
+            mapboxgl.accessToken
+          );
 
 
-      // ===================================================
-      // GPS PARADO
-      // ===================================================
+        const response =
+          await fetch(url);
 
-      geolocate.on('trackuserlocationend', function () {
 
-        document.getElementById('status').textContent =
-          'GPS parado';
+        const data =
+          await response.json();
 
-      });
+
+        if (!response.ok) {
+
+          console.error(
+            'SEARCH ERROR:',
+            data
+          );
+
+          results.innerHTML =
+            '<div class="result">Erro na busca.</div>';
+
+          return;
+
+        }
+
+
+        if (
+          !data.features ||
+          data.features.length === 0
+        ) {
+
+          results.innerHTML =
+            '<div class="result">Nenhum local encontrado.</div>';
+
+          return;
+
+        }
+
+
+        results.innerHTML = '';
+
+
+        data.features.forEach(
+          function(feature) {
+
+            const item =
+              document.createElement(
+                'div'
+              );
+
+
+            item.className =
+              'result';
+
+
+            item.textContent =
+              feature.properties.name ||
+              feature.properties.full_address ||
+              feature.place_name ||
+              'Local';
+
+
+            item.addEventListener(
+              'click',
+              function() {
+
+                selectDestination(
+                  feature
+                );
+
+              }
+            );
+
+
+            results.appendChild(
+              item
+            );
+
+          }
+        );
+
+      } catch (error) {
+
+        console.error(
+          'SEARCH ERROR:',
+          error
+        );
+
+        results.innerHTML =
+          '<div class="result">Erro de conexão.</div>';
+
+      }
 
     }
+
+
+    /*
+    =====================================================
+    SELECIONAR DESTINO
+    =====================================================
+    */
+
+    function selectDestination(
+      feature
+    ) {
+
+      const coordinates =
+        feature.geometry.coordinates;
+
+
+      const longitude =
+        coordinates[0];
+
+      const latitude =
+        coordinates[1];
+
+
+      /*
+      ===============================
+      REMOVER MARCADOR ANTERIOR
+      ===============================
+      */
+
+      if (destinationMarker) {
+
+        destinationMarker.remove();
+
+      }
+
+
+      /*
+      ===============================
+      NOVO MARCADOR
+      ===============================
+      */
+
+      destinationMarker =
+        new mapboxgl.Marker({
+
+          color: '#e53935'
+
+        })
+        .setLngLat([
+          longitude,
+          latitude
+        ])
+        .addTo(map);
+
+
+      /*
+      ===============================
+      IR PARA LOCAL
+      ===============================
+      */
+
+      map.flyTo({
+
+        center: [
+          longitude,
+          latitude
+        ],
+
+        zoom: 16,
+
+        duration: 1200
+
+      });
+
+
+      /*
+      ===============================
+      LIMPAR BUSCA
+      ===============================
+      */
+
+      searchInput.value =
+        feature.properties.name ||
+        'Destino';
+
+
+      results.style.display =
+        'none';
+
+
+      status(
+        'Destino selecionado'
+      );
+
+    }
+
+
+    /*
+    =====================================================
+    FECHAR RESULTADOS AO CLICAR FORA
+    =====================================================
+    */
+
+    document.addEventListener(
+      'click',
+      function(event) {
+
+        const box =
+          document.getElementById(
+            'searchBox'
+          );
+
+
+        if (
+          !box.contains(event.target)
+        ) {
+
+          results.style.display =
+            'none';
+
+        }
+
+      }
+    );
 
   </script>
 
 </body>
 </html>
+```
