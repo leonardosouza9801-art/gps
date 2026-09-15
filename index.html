@@ -9,165 +9,25 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.js"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-    }
-
-    #map {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    /* BUSCA */
-    #search {
-      position: fixed;
-      top: 15px;
-      left: 15px;
-      right: 15px;
-      z-index: 100;
-    }
-
-    #searchInput {
-      width: 100%;
-      height: 52px;
-      border: 0;
-      outline: none;
-      border-radius: 14px;
-      padding: 0 18px;
-      font-size: 16px;
-      background: #fff;
-      box-shadow: 0 3px 15px rgba(0,0,0,.25);
-    }
-
-    #results {
-      margin-top: 6px;
-      background: #fff;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 3px 15px rgba(0,0,0,.2);
-    }
-
-    .result {
-      padding: 14px;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-      font-size: 15px;
-    }
-
-    .result:last-child {
-      border-bottom: 0;
-    }
-
-    /* PAINEL DE CONTROLE DE ROTA */
-    #routePanel {
-      position: fixed;
-      top: 75px;
-      left: 15px;
-      right: 15px;
-      z-index: 100;
-      background: white;
-      border-radius: 14px;
-      padding: 12px;
-      box-shadow: 0 3px 15px rgba(0,0,0,.25);
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .mode-selector {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .mode-btn {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      background: #f8f9fa;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      transition: all 0.2s;
-    }
-
-    .mode-btn.active {
-      background: #007bff;
-      color: white;
-      border-color: #007bff;
-    }
-
-    #startRouteBtn {
-      width: 100%;
-      padding: 12px;
-      border: 0;
-      border-radius: 10px;
-      background: #28a745;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    /* STATUS */
-    #status {
-      position: fixed;
-      left: 15px;
-      right: 15px;
-      bottom: 15px;
-      z-index: 100;
-      padding: 13px;
-      background: white;
-      border-radius: 14px;
-      text-align: center;
-      font-weight: bold;
-      box-shadow: 0 3px 15px rgba(0,0,0,.2);
-    }
-
-    /* GPS */
-    #gps {
-      position: fixed;
-      right: 15px;
-      bottom: 75px;
-      z-index: 100;
-      width: 54px;
-      height: 54px;
-      border: 0;
-      border-radius: 50%;
-      background: white;
-      box-shadow: 0 3px 15px rgba(0,0,0,.25);
-      font-size: 25px;
-      cursor: pointer;
-    }
-
-    #gpsInfo {
-      position: fixed;
-      left: 15px;
-      right: 15px;
-      bottom: 70px;
-      z-index: 99;
-      display: none;
-      padding: 10px;
-      background: white;
-      border-radius: 12px;
-      font-size: 13px;
-      box-shadow: 0 3px 15px rgba(0,0,0,.2);
-    }
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif}
+#map{position:fixed;inset:0;width:100%;height:100%}
+#search{position:fixed;top:15px;left:15px;right:15px;z-index:100}
+#searchInput{width:100%;height:52px;border:0;outline:0;border-radius:14px;padding:0 18px;font-size:16px;background:#fff;box-shadow:0 3px 15px rgba(0,0,0,.25)}
+#results{margin-top:6px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 3px 15px rgba(0,0,0,.2)}
+.result{padding:14px;border-bottom:1px solid #eee;cursor:pointer;font-size:15px}.result:last-child{border:0}
+#routePanel{position:fixed;top:75px;left:15px;right:15px;z-index:100;background:#fff;border-radius:14px;padding:12px;box-shadow:0 3px 15px rgba(0,0,0,.25);display:none;flex-direction:column;gap:9px}
+.mode-selector{display:flex;gap:8px}.mode-btn{flex:1;padding:10px;border:1px solid #ddd;border-radius:10px;background:#f8f9fa;font-size:14px;font-weight:bold}.mode-btn.active{background:#007bff;color:#fff;border-color:#007bff}
+#routeSummary{display:none;padding:9px 10px;border-radius:10px;background:#f1f5f9;font-size:14px;line-height:1.35}#routeSummary b{font-size:17px}
+#startRouteBtn{width:100%;padding:12px;border:0;border-radius:10px;background:#28a745;color:#fff;font-size:16px;font-weight:bold}.navigating{background:#dc3545!important}
+#navigationCard{position:fixed;top:15px;left:15px;right:15px;z-index:120;display:none;background:#fff;border-radius:15px;padding:11px 13px;box-shadow:0 4px 18px rgba(0,0,0,.28)}
+#instruction{font-size:18px;font-weight:bold;line-height:1.25}#instruction small{display:block;margin-top:4px;font-size:13px;font-weight:normal;color:#555}
+#navStats{display:flex;gap:8px;margin-top:9px}.stat{flex:1;background:#f1f5f9;border-radius:9px;padding:7px;text-align:center;font-size:12px}.stat b{display:block;font-size:16px}
+#alertBox{position:fixed;top:150px;left:15px;right:15px;z-index:130;display:none;padding:13px;border-radius:13px;background:#fff3cd;color:#664d03;font-weight:bold;text-align:center;box-shadow:0 3px 15px rgba(0,0,0,.2)}
+#speedBox{position:fixed;right:15px;bottom:140px;z-index:110;width:72px;height:72px;border-radius:50%;background:#fff;box-shadow:0 3px 15px rgba(0,0,0,.28);display:none;align-items:center;justify-content:center;flex-direction:column;font-weight:bold}.speed{font-size:23px}.limit{font-size:11px;color:#555}#speedBox.over{background:#dc3545;color:#fff}#speedBox.over .limit{color:#fff}
+#gps{position:fixed;right:15px;bottom:75px;z-index:100;width:54px;height:54px;border:0;border-radius:50%;background:#fff;box-shadow:0 3px 15px rgba(0,0,0,.25);font-size:25px}
+#gpsInfo{position:fixed;left:15px;right:15px;bottom:70px;z-index:99;display:none;padding:10px;background:#fff;border-radius:12px;font-size:13px;box-shadow:0 3px 15px rgba(0,0,0,.2)}
+#status{position:fixed;left:15px;right:15px;bottom:15px;z-index:100;padding:13px;background:#fff;border-radius:14px;text-align:center;font-weight:bold;box-shadow:0 3px 15px rgba(0,0,0,.2)}
+#recalcBadge{position:fixed;bottom:95px;left:50%;transform:translateX(-50%);z-index:140;display:none;padding:9px 13px;border-radius:20px;background:#007bff;color:#fff;font-size:13px;font-weight:bold}
   </style>
 </head>
 
@@ -191,13 +51,22 @@
       <button class="mode-btn" data-mode="driving-traffic">🏍️ Moto</button>
       <button class="mode-btn" data-mode="cycling">🚲 Bike</button>
     </div>
+    <div id="routeSummary"></div>
     <button id="startRouteBtn">▶️ Iniciar Rota</button>
   </div>
-
+  <div id="navigationCard">
+    <div id="instruction">Prepare-se para iniciar</div>
+    <div id="navStats">
+      <div class="stat"><b id="eta">--</b>chegada</div>
+      <div class="stat"><b id="remaining">--</b>restante</div>
+      <div class="stat"><b id="currentSpeed">0</b>km/h</div>
+    </div>
+  </div>
+  <div id="alertBox"></div>
+  <div id="speedBox"><span class="speed" id="speedValue">0</span><span class="limit" id="speedLimit">km/h</span></div>
   <button id="gps">📍</button>
-
   <div id="gpsInfo">GPS: procurando...</div>
-
+  <div id="recalcBadge">🔄 Recalculando rota...</div>
   <div id="status">Carregando mapa...</div>
 
 <script>
